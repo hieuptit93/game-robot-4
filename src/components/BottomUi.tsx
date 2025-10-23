@@ -4,10 +4,31 @@ import { GameState, InputType } from '../types/game';
 interface BottomUiProps {
   gameState: GameState;
   onInput: (inputType: InputType) => void;
+  pronunciationHook?: any; // Add pronunciation hook for status display
 }
 
-const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput }) => {
+const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput, pronunciationHook }) => {
+  // Add pulse animation styles
   useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
+  // Only enable keyboard controls if pronunciation hook is not provided or not working
+  useEffect(() => {
+    if (pronunciationHook) return; // Skip keyboard controls when using pronunciation
+
     const handleKeyPress = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
       if (key === 'a') onInput('A');
@@ -17,7 +38,7 @@ const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput }) => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [onInput]);
+  }, [onInput, pronunciationHook]);
 
   const getFluencyBarColor = () => {
     switch (gameState.fluencyLevel) {
@@ -93,52 +114,96 @@ const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput }) => {
         {gameState.feedbackText}
       </div>
 
-      {/* Control Instructions */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '30px',
-        fontSize: '14px'
-      }}>
+      {/* Pronunciation Status or Control Instructions */}
+      {pronunciationHook ? (
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
+          justifyContent: 'center',
           alignItems: 'center',
-          padding: '10px',
-          background: 'rgba(0, 255, 136, 0.1)',
-          borderRadius: '8px',
-          border: '1px solid rgba(0, 255, 136, 0.3)'
+          gap: '20px',
+          fontSize: '14px'
         }}>
-          <div style={{ fontWeight: 'bold', color: '#00ff88' }}>A</div>
-          <div style={{ color: '#ccc' }}>Perfect ✅</div>
+          {/* Microphone Status */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 15px',
+            background: pronunciationHook.isListening ? 'rgba(0, 255, 136, 0.1)' : 'rgba(255, 68, 68, 0.1)',
+            borderRadius: '8px',
+            border: `1px solid ${pronunciationHook.isListening ? 'rgba(0, 255, 136, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`
+          }}>
+            <div style={{ 
+              fontSize: '18px',
+              animation: pronunciationHook.isRecording ? 'pulse 1s infinite' : 'none'
+            }}>
+              🎤
+            </div>
+            <div style={{ color: '#ccc' }}>
+              {gameState.isWaitingForNext ? 'Waiting...' : 
+               pronunciationHook.isRecording ? 'Recording...' : 
+               pronunciationHook.isListening ? 'Listening...' : 'Ready'}
+            </div>
+          </div>
+
+          {/* Score Ranges */}
+          <div style={{
+            display: 'flex',
+            gap: '15px',
+            fontSize: '12px'
+          }}>
+            <div style={{ color: '#00ff88' }}>≥70: Perfect</div>
+            <div style={{ color: '#ffaa00' }}>≥40: Minor</div>
+            <div style={{ color: '#ff4444' }}>&lt;40: Failure</div>
+          </div>
         </div>
-        
+      ) : (
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '10px',
-          background: 'rgba(255, 170, 0, 0.1)',
-          borderRadius: '8px',
-          border: '1px solid rgba(255, 170, 0, 0.3)'
+          justifyContent: 'center',
+          gap: '30px',
+          fontSize: '14px'
         }}>
-          <div style={{ fontWeight: 'bold', color: '#ffaa00' }}>S</div>
-          <div style={{ color: '#ccc' }}>Minor ⚠️</div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '10px',
+            background: 'rgba(0, 255, 136, 0.1)',
+            borderRadius: '8px',
+            border: '1px solid rgba(0, 255, 136, 0.3)'
+          }}>
+            <div style={{ fontWeight: 'bold', color: '#00ff88' }}>A</div>
+            <div style={{ color: '#ccc' }}>Perfect ✅</div>
+          </div>
+          
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '10px',
+            background: 'rgba(255, 170, 0, 0.1)',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 170, 0, 0.3)'
+          }}>
+            <div style={{ fontWeight: 'bold', color: '#ffaa00' }}>S</div>
+            <div style={{ color: '#ccc' }}>Minor ⚠️</div>
+          </div>
+          
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '10px',
+            background: 'rgba(255, 68, 68, 0.1)',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 68, 68, 0.3)'
+          }}>
+            <div style={{ fontWeight: 'bold', color: '#ff4444' }}>D</div>
+            <div style={{ color: '#ccc' }}>Failure ❌</div>
+          </div>
         </div>
-        
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '10px',
-          background: 'rgba(255, 68, 68, 0.1)',
-          borderRadius: '8px',
-          border: '1px solid rgba(255, 68, 68, 0.3)'
-        }}>
-          <div style={{ fontWeight: 'bold', color: '#ff4444' }}>D</div>
-          <div style={{ color: '#ccc' }}>Failure ❌</div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

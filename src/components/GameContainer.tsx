@@ -1,14 +1,90 @@
-import React from 'react';
+import React, { useEffect, useCallback, useMemo, useRef } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { useAudio } from '../hooks/useAudio';
+import { usePronunciationScoring } from '../hooks/usePronunciationScoring';
 import TopHud from './TopHud';
 import BottomUi from './BottomUi';
 import TowerStackScene from './TowerStackScene';
 import { InputType } from '../types/game';
 
 const GameContainer: React.FC = () => {
-  const { gameState, handleInput, resetGame, triggerCollapse, handleBlockFall } = useGameState();
+  const { gameState, handleInput, handlePronunciationResult, resetGame, startGame, triggerCollapse, handleBlockFall } = useGameState();
   const { playSound } = useAudio();
+
+  // Memoize the analysis callback to prevent recreation
+  const onAnalysisComplete = useCallback((result: any) => {
+    console.log('🎯 Pronunciation analysis completed:', result);
+    if (result && result.total_score !== undefined) {
+      // Convert score to 0-100 range (multiply by 100)
+      const score = Math.round(result.total_score * 100);
+      console.log('📊 Final score:', score);
+      handlePronunciationResult(score);
+    }
+  }, [handlePronunciationResult]);
+
+  // Memoize the pronunciation config to prevent recreation
+  const pronunciationConfig = useMemo(() => ({
+    mode: 'vad' as const,
+    autoAnalyze: true,
+    textToAnalyze: gameState.currentChunk,
+    vadConfig: {
+      silenceThreshold: -30,
+      speechThreshold: -18,
+      minSpeechDuration: 500,
+      maxSilenceDuration: 1000,
+      maxRecordingTime: 8000
+    },
+    enableLogging: true,
+    onAnalysisComplete
+  }), [gameState.currentChunk, onAnalysisComplete]);
+
+  // Pronunciation scoring hook with VAD mode and auto-analysis
+  const pronunciationHook = usePronunciationScoring(pronunciationConfig);
+
+  // Simple state-based approach to avoid loops
+  const shouldListen = gameState.isGameStarted && !gameState.isGameOver && !gameState.isWaitingForNext;
+  
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (shouldListen) {
+      console.log('🎤 Starting pronunciation listening for:', gameState.currentChunk);
+      // Small delay to prevent rapid start/stop cycles
+      timeoutId = setTimeout(() => {
+        pronunciationHook.startListening();
+      }, 100);
+    } else {
+      console.log('🛑 Stopping pronunciation listening');
+      pronunciationHook.stopListening();
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      pronunciationHook.stopListening();
+    };
+  }, [shouldListen, gameState.currentChunk]); // Remove pronunciationHook from deps to prevent loop
+
+  // Play sounds based on pronunciation results
+  useEffect(() => {
+    if (gameState.fluencyLevel !== 'neutral') {
+      switch (gameState.fluencyLevel) {
+        case 'perfect':
+          playSound('perfect');
+          if (gameState.comboStreak >= 3) {
+            setTimeout(() => playSound('combo'), 100);
+          }
+          break;
+        case 'minor':
+          playSound('minor');
+          break;
+        case 'failure':
+          playSound('failure');
+          break;
+      }
+    }
+  }, [gameState.fluencyLevel, gameState.comboStreak, playSound]);
 
   const handleInputWithAudio = (inputType: InputType) => {
     handleInput(inputType);
@@ -109,7 +185,7 @@ const GameContainer: React.FC = () => {
     }}>
       {/* HUD Components */}
       <TopHud gameState={gameState} />
-      <BottomUi gameState={gameState} onInput={handleInputWithAudio} />
+      <BottomUi gameState={gameState} onInput={handleInputWithAudio} pronunciationHook={pronunciationHook} />
       
       {/* 3D Scene */}
       <TowerStackScene 
@@ -146,15 +222,48 @@ const GameContainer: React.FC = () => {
             Chunk Tower Stack
           </h1>
           
-          <p style={{ fontSize: '20px', marginBottom: '30px', textAlign: 'center', maxWidth: '400px' }}>
-            Build a tower by pronouncing chunks correctly!<br/>
-            Press A, S, or D to start building.
+          <p style={{ fontSize: '20px', marginBottom: '30px', textAlign: 'center', maxWidth: '500px' }}>
+            Build a tower by pronouncing words correctly!<br/>
+            Say the words clearly into your microphone.
           </p>
           
           <div style={{ fontSize: '16px', color: '#ccc', textAlign: 'center' }}>
+            <div>🎤 Speak clearly for automatic scoring</div>
             <div>🎯 Get 3 perfect pronunciations for COMBO mode!</div>
             <div>⚠️ Keep your tower balanced or it will collapse!</div>
+            <div style={{ marginTop: '10px', fontSize: '14px' }}>
+              <span style={{ color: '#00ff88' }}>≥70: Perfect</span> | 
+              <span style={{ color: '#ffaa00' }}> ≥40: Minor</span> | 
+              <span style={{ color: '#ff4444' }}> &lt;40: Failure</span>
+            </div>
           </div>
+
+          <button
+            onClick={startGame}
+            style={{
+              marginTop: '30px',
+              padding: '15px 30px',
+              fontSize: '18px',
+              background: 'linear-gradient(45deg, #00ff88, #00cc6a)',
+              border: 'none',
+              borderRadius: '10px',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 15px rgba(0, 255, 136, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 255, 136, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 255, 136, 0.3)';
+            }}
+          >
+            🎤 Start Speaking Game
+          </button>
         </div>
       )}
     </div>

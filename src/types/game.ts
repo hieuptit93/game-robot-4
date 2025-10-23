@@ -10,6 +10,8 @@ export interface GameState {
   currentChunk: string;
   fluencyLevel: 'perfect' | 'minor' | 'failure' | 'neutral';
   feedbackText: string;
+  isWaitingForNext: boolean;
+  currentChunkIndex: number;
 }
 
 export interface TowerBlock {

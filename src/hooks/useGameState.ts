@@ -12,7 +12,9 @@ const INITIAL_STATE: GameState = {
   isGameStarted: false,
   currentChunk: "Hello world",
   fluencyLevel: 'neutral',
-  feedbackText: "Press A, S, or D to start building!"
+  feedbackText: "Say the word to start building!",
+  isWaitingForNext: false,
+  currentChunkIndex: 0
 };
 
 const CHUNKS = [
@@ -66,7 +68,111 @@ export const useGameState = () => {
     return () => clearTimeout(timeout);
   }, [gameState.isComboActive]);
 
+  const handlePronunciationResult = useCallback((score: number) => {
+    if (gameState.isGameOver || gameState.isWaitingForNext) return;
+
+    setGameState(prev => {
+      if (!prev.isGameStarted) {
+        return { ...prev, isGameStarted: true };
+      }
+
+      // Convert score to input type based on thresholds
+      let inputType: InputType;
+      let scoreIncrease = 0;
+      let newComboStreak = prev.comboStreak;
+      let newIsComboActive = prev.isComboActive;
+      let fluencyLevel: GameState['fluencyLevel'] = 'neutral';
+      let feedbackText = '';
+
+      // Score thresholds: >=70 Perfect, >=40 Minor, <40 Failure
+      if (score >= 70) {
+        inputType = 'A';
+        scoreIncrease = prev.isComboActive ? 150 : 100;
+        newComboStreak = prev.comboStreak + 1;
+        fluencyLevel = 'perfect';
+        feedbackText = `Perfect pronunciation! Score: ${score} ✅`;
+        
+        if (newComboStreak >= 3) {
+          newIsComboActive = true;
+          feedbackText = `COMBO ACTIVE! Score: ${score} 🔥`;
+        }
+      } else if (score >= 40) {
+        inputType = 'S';
+        scoreIncrease = 50;
+        newComboStreak = 0;
+        newIsComboActive = false;
+        fluencyLevel = 'minor';
+        feedbackText = `Good effort! Score: ${score} ⚠️`;
+      } else {
+        inputType = 'D';
+        scoreIncrease = 0;
+        newComboStreak = 0;
+        newIsComboActive = false;
+        fluencyLevel = 'failure';
+        feedbackText = `Try again! Score: ${score} ❌`;
+      }
+
+      // Calculate position for new block
+      let blockX = 0;
+      let blockZ = 0;
+      
+      // For perfect blocks, align exactly with the previous block
+      if (inputType === 'A' && prev.towerBlocks.length > 0) {
+        const lastBlock = prev.towerBlocks[prev.towerBlocks.length - 1];
+        blockX = lastBlock.position[0];
+        blockZ = lastBlock.position[2];
+      }
+      // For minor blocks, very slight offset
+      else if (inputType === 'S') {
+        blockX = (Math.random() - 0.5) * 0.1;
+        blockZ = (Math.random() - 0.5) * 0.1;
+      }
+      // For failure blocks, large offset
+      else if (inputType === 'D') {
+        blockX = (Math.random() - 0.5) * 1.2;
+        blockZ = (Math.random() - 0.5) * 1.2;
+      }
+
+      // Create new block
+      const newBlock: TowerBlock = {
+        id: `block-${Date.now()}-${Math.random()}`,
+        type: inputType === 'A' ? 'perfect' : inputType === 'S' ? 'minor' : 'failure',
+        position: [blockX, prev.towerBlocks.length * 3.0 + 1.5, blockZ],
+        rotation: [0, 0, 0],
+        color: inputType === 'A' ? '#00ff88' : inputType === 'S' ? '#ffaa00' : '#ff4444',
+        glowColor: inputType === 'A' ? '#00ff88' : inputType === 'S' ? '#ffaa00' : '#ff4444'
+      };
+
+      // Move to next chunk
+      const nextChunkIndex = (prev.currentChunkIndex + 1) % CHUNKS.length;
+      const newChunk = CHUNKS[nextChunkIndex];
+
+      return {
+        ...prev,
+        score: prev.score + scoreIncrease,
+        comboStreak: newComboStreak,
+        isComboActive: newIsComboActive,
+        towerBlocks: [...prev.towerBlocks, newBlock],
+        fluencyLevel,
+        feedbackText,
+        currentChunk: newChunk,
+        currentChunkIndex: nextChunkIndex,
+        isWaitingForNext: true // Set waiting state
+      };
+    });
+
+    // Wait 3 seconds before allowing next word
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        isWaitingForNext: false,
+        feedbackText: `Say: "${prev.currentChunk}"`
+      }));
+    }, 3000);
+  }, [gameState.isGameOver, gameState.isWaitingForNext]);
+
   const handleInput = useCallback((inputType: InputType) => {
+    // Keep this for manual testing/fallback
     if (gameState.isGameOver) return;
 
     setGameState(prev => {
@@ -121,14 +227,14 @@ export const useGameState = () => {
         blockX = lastBlock.position[0];
         blockZ = lastBlock.position[2];
       }
-      // For minor blocks, very slight offset (giảm mạnh để tránh trôi)
+      // For minor blocks, very slight offset
       else if (inputType === 'S') {
-        blockX = (Math.random() - 0.5) * 0.1; // Giảm xuống ±0.05
+        blockX = (Math.random() - 0.5) * 0.1;
         blockZ = (Math.random() - 0.5) * 0.1;
       }
-      // For failure blocks, large offset để rơi lệch hẳn
+      // For failure blocks, large offset
       else if (inputType === 'D') {
-        blockX = (Math.random() - 0.5) * 1.2; // Tăng offset ±0.6 để rơi lệch hẳn
+        blockX = (Math.random() - 0.5) * 1.2;
         blockZ = (Math.random() - 0.5) * 1.2;
       }
 
@@ -136,7 +242,7 @@ export const useGameState = () => {
       const newBlock: TowerBlock = {
         id: `block-${Date.now()}-${Math.random()}`,
         type: inputType === 'A' ? 'perfect' : inputType === 'S' ? 'minor' : 'failure',
-        position: [blockX, prev.towerBlocks.length * 3.0 + 1.5, blockZ], // Tăng spacing cho blocks to hơn (1.5x)
+        position: [blockX, prev.towerBlocks.length * 3.0 + 1.5, blockZ],
         rotation: [0, 0, 0],
         color: inputType === 'A' ? '#00ff88' : inputType === 'S' ? '#ffaa00' : '#ff4444',
         glowColor: inputType === 'A' ? '#00ff88' : inputType === 'S' ? '#ffaa00' : '#ff4444'
@@ -160,6 +266,14 @@ export const useGameState = () => {
 
   const resetGame = useCallback(() => {
     setGameState(INITIAL_STATE);
+  }, []);
+
+  const startGame = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      isGameStarted: true,
+      feedbackText: `Say: "${prev.currentChunk}"`
+    }));
   }, []);
 
   const triggerCollapse = useCallback(() => {
@@ -199,7 +313,9 @@ export const useGameState = () => {
   return {
     gameState,
     handleInput,
+    handlePronunciationResult,
     resetGame,
+    startGame,
     triggerCollapse,
     handleBlockFall
   };
