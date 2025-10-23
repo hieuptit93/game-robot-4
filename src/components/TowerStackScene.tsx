@@ -56,7 +56,6 @@ const CameraController: React.FC<{ gameState: GameState }> = ({ gameState }) => 
     camera.lookAt(0, lookAtHeight, 0);
 
     // Debug log với thông tin thực tế blocks
-    console.log(`Blocks: ${numBlocks}, Top block Y: ${topBlockCenterY}, Camera Y: ${cameraHeight}, LookAt Y: ${lookAtHeight}`);
   });
 
   return null;
