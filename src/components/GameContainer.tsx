@@ -1,14 +1,40 @@
-import React, { useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { useAudio } from '../hooks/useAudio';
 import { usePronunciationScoring } from '../hooks/usePronunciationScoring';
 import TopHud from './TopHud';
 import BottomUi from './BottomUi';
 import TowerStackScene from './TowerStackScene';
+import SurveyModal from './SurveyModal';
 import { InputType } from '../types/game';
+import { supabase } from '../lib/supabaseClient';
 
-const GameContainer: React.FC = () => {
-  const { gameState, handleInput, handlePronunciationResult, resetGame, startGame, triggerCollapse, handleBlockFall } = useGameState();
+interface GameContainerProps {
+  userId: string | null;
+  age: number | string | null;
+  gameId: string | number | null;
+  urlParams: Record<string, string>;
+}
+
+const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlParams }) => {
+  const [gameSessionId, setGameSessionId] = useState<string | null>(null);
+  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const [isWin, setIsWin] = useState(false);
+  const { gameState, handleInput, handlePronunciationResult, resetGame: originalResetGame, startGame: originalStartGame, triggerCollapse, handleBlockFall } = useGameState();
+
+  // Wrapper to reset gameSessionId when starting new game
+  const startGame = useCallback(() => {
+    setGameSessionId(null);
+    setIsWin(false);
+    originalStartGame();
+  }, [originalStartGame]);
+
+  // Wrapper to reset gameSessionId when resetting
+  const resetGame = useCallback(() => {
+    setGameSessionId(null);
+    setIsWin(false);
+    originalResetGame();
+  }, [originalResetGame]);
   const { playSound } = useAudio();
 
   // Memoize the analysis callback to prevent recreation
@@ -111,23 +137,202 @@ const GameContainer: React.FC = () => {
     triggerCollapse();
   };
 
+  // Track win condition (towerBlocks.length >= 10 when game over)
+  useEffect(() => {
+    if (gameState.isGameOver && gameState.towerBlocks.length >= 10) {
+      setIsWin(true);
+    }
+  }, [gameState.isGameOver, gameState.towerBlocks.length]);
+
+  // Create a game_session row only when game actually starts
+  useEffect(() => {
+    const createSession = async () => {
+      if (!gameState.isGameStarted) return;
+      if (gameSessionId) return; // Already have a session
+      if (!userId) return; // Need userId to create session
+
+      const numericAge = Number.isFinite(Number(age)) ? Number(age) : null;
+      const numericGameId = Number.isFinite(Number(gameId)) ? Number(gameId) : null;
+
+      const payload = {
+        user_id: userId,
+        age: numericAge,
+        game_id: numericGameId,
+        start_time: new Date().toISOString(),
+        score: 0,
+        profile_data: urlParams || {}
+      };
+
+      try {
+        const { data, error } = await supabase
+          .from('game_sessions')
+          .insert(payload)
+          .select('id')
+          .single();
+
+        if (error) {
+          console.error('Failed to create game session:', error);
+          return;
+        }
+
+        setGameSessionId(data?.id || null);
+        console.log('Created game session:', data?.id);
+      } catch (err) {
+        console.error('Unexpected error creating game session:', err);
+      }
+    };
+
+    createSession();
+  }, [gameState.isGameStarted, userId, age, gameId, urlParams, gameSessionId]);
+
+  // Open survey when game over ONLY if user hasn't completed survey for this game before
+  useEffect(() => {
+    const checkAndOpenSurvey = async () => {
+      if (!gameState.isGameOver) {
+        setIsSurveyOpen(false);
+        return;
+      }
+      
+      console.log('🔍 Checking survey display:', { gameState, gameSessionId, userId, gameId, score: gameState.score });
+      
+      try {
+        const numericGameId = Number.isFinite(Number(gameId)) ? Number(gameId) : null;
+
+        // If we know the user and game, check historical completion
+        if (userId && numericGameId != null) {
+          const { data: history, error: historyError } = await supabase
+            .from('game_sessions')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('game_id', numericGameId)
+            .eq('survey_completed', true)
+            .limit(1);
+
+          if (!historyError && Array.isArray(history) && history.length > 0) {
+            console.log('❌ Survey already completed for this user and game. Not showing.');
+            setIsSurveyOpen(false);
+            return;
+          }
+        }
+
+        // Fallback to current session's completion flag if available
+        if (gameSessionId) {
+          const { data, error } = await supabase
+            .from('game_sessions')
+            .select('survey_completed')
+            .eq('id', gameSessionId)
+            .single();
+          if (!error && data) {
+            const completed = Boolean(data?.survey_completed);
+            console.log('📊 Current session survey_completed:', completed, 'Setting isSurveyOpen to:', !completed);
+            setIsSurveyOpen(!completed);
+            return;
+          } else {
+            console.log('⚠️ Could not fetch current session, will show survey');
+          }
+        } else {
+          console.log('⚠️ No gameSessionId, will show survey');
+        }
+
+        // Default: show if we couldn't verify completion
+        console.log('✅ Showing survey (default - no restrictions found)');
+        setIsSurveyOpen(true);
+      } catch (e) {
+        console.error('⚠️ Error checking survey completion:', e);
+        console.log('✅ Showing survey (fallback due to error)');
+        setIsSurveyOpen(true);
+      }
+    };
+
+    // Add small delay to ensure end_time update completes first
+    const timer = setTimeout(() => {
+      checkAndOpenSurvey();
+    }, 200);
+    
+    return () => clearTimeout(timer);
+  }, [gameState.isGameOver, gameSessionId, userId, gameId, gameState.score]);
+
+  // When game ends, update end_time and final score on the session
+  useEffect(() => {
+    const markEndTime = async () => {
+      if (!gameState.isGameOver || !gameSessionId) return;
+      try {
+        await supabase
+          .from('game_sessions')
+          .update({ end_time: new Date().toISOString(), score: gameState.score })
+          .eq('id', gameSessionId);
+      } catch (e) {
+        // noop
+      }
+    };
+    markEndTime();
+  }, [gameState.isGameOver, gameSessionId, gameState.score]);
+
+  const handleCloseSurvey = useCallback(() => {
+    setIsSurveyOpen(false);
+  }, []);
+
+  const handlePlayAgain = useCallback(() => {
+    setIsSurveyOpen(false);
+    setIsWin(false);
+    resetGame();
+  }, [resetGame]);
+
+  const handleExitGame = useCallback(async () => {
+    // Update game_sessions to mark that user exited via button
+    if (gameSessionId) {
+      try {
+        await supabase
+          .from('game_sessions')
+          .update({ exited_via_button: true, end_time: new Date().toISOString(), score: gameState.score })
+          .eq('id', gameSessionId);
+      } catch (e) {
+        console.error('Error updating exited_via_button:', e);
+      }
+    }
+    // Redirect after updating
+    window.location.href = 'https://robot-record-web.hacknao.edu.vn/games';
+  }, [gameSessionId, gameState.score]);
+
   // Handle game over screen
   if (gameState.isGameOver) {
+    const isWinCondition = isWin || gameState.towerBlocks.length >= 10;
     return (
-      <div style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(135deg, #1a1a1a 0%, #2d1b69 100%)',
-        color: 'white',
-        textAlign: 'center'
-      }}>
-        <h1 style={{ fontSize: '48px', marginBottom: '20px', textShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
-          Game Over!
-        </h1>
+      <>
+        <div style={{
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, #1a1a1a 0%, #2d1b69 100%)',
+          color: 'white',
+          textAlign: 'center'
+        }}>
+          <button
+            onClick={handleExitGame}
+            style={{
+              position: 'fixed',
+              top: '16px',
+              left: '16px',
+              zIndex: 50,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              padding: '8px 16px',
+              border: '1px solid #0ea5e9',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontFamily: 'monospace'
+            }}
+          >
+            ← Thoát game
+          </button>
+          
+          <h1 style={{ fontSize: '48px', marginBottom: '20px', textShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
+            {isWinCondition ? '🎉 Congratulations!' : 'Game Over!'}
+          </h1>
         
         <div style={{ fontSize: '24px', marginBottom: '10px' }}>
           Final Score: <span style={{ color: '#ffaa00' }}>{gameState.score}</span>
@@ -173,6 +378,17 @@ const GameContainer: React.FC = () => {
           Play Again
         </button>
       </div>
+      <SurveyModal
+        isOpen={isSurveyOpen}
+        onClose={handleCloseSurvey}
+        onPlayAgain={handlePlayAgain}
+        gameSessionId={gameSessionId}
+        currentGameId={gameId}
+        userId={userId}
+        age={age}
+        urlParams={urlParams}
+      />
+      </>
     );
   }
 
@@ -194,6 +410,29 @@ const GameContainer: React.FC = () => {
         onBlockFall={handleBlockFall}
       />
       
+      {/* Exit button when playing */}
+      {gameState.isGameStarted && !gameState.isGameOver && (
+        <button
+          onClick={handleExitGame}
+          style={{
+            position: 'fixed',
+            top: '16px',
+            left: '16px',
+            zIndex: 50,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            padding: '8px 16px',
+            border: '1px solid #0ea5e9',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontFamily: 'monospace'
+          }}
+        >
+          ← Thoát game
+        </button>
+      )}
+
       {/* Start Screen Overlay */}
       {!gameState.isGameStarted && (
         <div style={{
@@ -211,6 +450,25 @@ const GameContainer: React.FC = () => {
           zIndex: 200,
           backdropFilter: 'blur(5px)'
         }}>
+          <button
+            onClick={handleExitGame}
+            style={{
+              position: 'fixed',
+              top: '16px',
+              left: '16px',
+              zIndex: 250,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              padding: '8px 16px',
+              border: '1px solid #0ea5e9',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontFamily: 'monospace'
+            }}
+          >
+            ← Thoát game
+          </button>
           <h1 style={{ 
             fontSize: '48px', 
             marginBottom: '20px',
