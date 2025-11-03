@@ -378,15 +378,15 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                         <p style={modalStyles.question}>Bạn có thích trò chơi này không?</p>
                         <div style={modalStyles.buttonGroup}>
                             <button 
-                                onClick={() => handleNextFromStep1('happy')} 
+                                onClick={() => handleNextFromStep1('sad')} 
                                 style={{
                                     ...modalStyles.button,
                                     ...modalStyles.emojiButton,
-                                    ...(likeAnswer === 'happy' ? modalStyles.buttonSelected : {})
+                                    ...(likeAnswer === 'sad' ? modalStyles.buttonSelected : {})
                                 }}
-                                aria-label="Rất thích"
+                                aria-label="Không thích"
                             >
-                                😊
+                                😞
                             </button>
                             <button 
                                 onClick={() => handleNextFromStep1('neutral')} 
@@ -400,15 +400,15 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                                 😐
                             </button>
                             <button 
-                                onClick={() => handleNextFromStep1('sad')} 
+                                onClick={() => handleNextFromStep1('happy')} 
                                 style={{
                                     ...modalStyles.button,
                                     ...modalStyles.emojiButton,
-                                    ...(likeAnswer === 'sad' ? modalStyles.buttonSelected : {})
+                                    ...(likeAnswer === 'happy' ? modalStyles.buttonSelected : {})
                                 }}
-                                aria-label="Không thích"
+                                aria-label="Rất thích"
                             >
-                                😞
+                                😊
                             </button>
                         </div>
                         <p style={modalStyles.required}>(Bắt buộc)</p>
