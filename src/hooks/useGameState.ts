@@ -10,7 +10,7 @@ const INITIAL_STATE: GameState = {
   fallenBlocks: 0,
   isGameOver: false,
   isGameStarted: false,
-  currentChunk: "Xin chào",
+  currentChunk: "Hello",
   fluencyLevel: 'neutral',
   feedbackText: "Nói từ để bắt đầu xây dựng!",
   isWaitingForNext: false,
