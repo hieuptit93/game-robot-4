@@ -21,23 +21,23 @@ const CHUNKS = [
   "Hello",
   "How are you?",
   "Nice to meet you",
-  "What’s your name?",
-  "I’m fine, thank you",
   "See you later",
   "Have a great day",
   "Take care",
   "Good morning",
   "Good night",
   "Where are you from?",
-  "I’m from Vietnam",
   "Can you help me?",
   "Thank you very much",
-  "You’re welcome",
-  "I don’t understand",
+  "You are welcome",
+  "I do not understand",
   "Please speak slowly",
   "How much is this?",
-  "I’m sorry",
-  "Excuse me"
+  "Excuse me",
+  "What is your favorite color?",
+  "Good afternoon",
+  "What time is it?",
+  "Do you speak English?"
 ];
 
 export const useGameState = () => {
