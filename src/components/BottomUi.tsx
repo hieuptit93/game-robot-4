@@ -140,9 +140,9 @@ const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput, pronunciationHo
               🎤
             </div>
             <div style={{ color: '#ccc' }}>
-              {gameState.isWaitingForNext ? 'Waiting...' : 
-               pronunciationHook.isRecording ? 'Recording...' : 
-               pronunciationHook.isListening ? 'Listening...' : 'Ready'}
+              {gameState.isWaitingForNext ? 'Đang chờ...' : 
+               pronunciationHook.isRecording ? 'Đang ghi âm...' : 
+               pronunciationHook.isListening ? 'Đang nghe...' : 'Sẵn sàng'}
             </div>
           </div>
 
@@ -152,9 +152,9 @@ const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput, pronunciationHo
             gap: '15px',
             fontSize: '12px'
           }}>
-            <div style={{ color: '#00ff88' }}>≥70: Perfect</div>
-            <div style={{ color: '#ffaa00' }}>≥40: Minor</div>
-            <div style={{ color: '#ff4444' }}>&lt;40: Failure</div>
+            <div style={{ color: '#00ff88' }}>≥70: Hoàn hảo</div>
+            <div style={{ color: '#ffaa00' }}>≥40: Tạm được</div>
+            <div style={{ color: '#ff4444' }}>&lt;40: Thất bại</div>
           </div>
         </div>
       ) : (
@@ -174,7 +174,7 @@ const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput, pronunciationHo
             border: '1px solid rgba(0, 255, 136, 0.3)'
           }}>
             <div style={{ fontWeight: 'bold', color: '#00ff88' }}>A</div>
-            <div style={{ color: '#ccc' }}>Perfect ✅</div>
+            <div style={{ color: '#ccc' }}>Hoàn hảo ✅</div>
           </div>
           
           <div style={{
@@ -187,7 +187,7 @@ const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput, pronunciationHo
             border: '1px solid rgba(255, 170, 0, 0.3)'
           }}>
             <div style={{ fontWeight: 'bold', color: '#ffaa00' }}>S</div>
-            <div style={{ color: '#ccc' }}>Minor ⚠️</div>
+            <div style={{ color: '#ccc' }}>Tạm được ⚠️</div>
           </div>
           
           <div style={{
@@ -200,7 +200,7 @@ const BottomUi: React.FC<BottomUiProps> = ({ gameState, onInput, pronunciationHo
             border: '1px solid rgba(255, 68, 68, 0.3)'
           }}>
             <div style={{ fontWeight: 'bold', color: '#ff4444' }}>D</div>
-            <div style={{ color: '#ccc' }}>Failure ❌</div>
+            <div style={{ color: '#ccc' }}>Thất bại ❌</div>
           </div>
         </div>
       )}

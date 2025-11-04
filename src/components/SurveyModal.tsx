@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 interface SurveyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onPlayAgain: () => void;
-  gameSessionId: string | null;
-  currentGameId: string | number | null;
-  userId: string | null;
-  age: number | string | null;
-  urlParams: Record<string, string>;
+    isOpen: boolean;
+    onClose: () => void;
+    onPlayAgain: () => void;
+    gameSessionId: string | null;
+    currentGameId: string | number | null;
+    userId: string | null;
+    age: number | string | null;
+    urlParams: Record<string, string>;
 }
 
 // Inline styles for SurveyModal (no Tailwind dependency)
@@ -187,11 +187,11 @@ const modalStyles = {
 };
 
 interface Game {
-  id: number;
-  title: string;
-  key: string;
-  image: string | null;
-  href: string;
+    id: number;
+    title: string;
+    key: string;
+    image: string | null;
+    href: string;
 }
 
 const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain, gameSessionId, currentGameId, userId, age, urlParams }) => {
@@ -228,7 +228,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
 
                 if (error) throw error;
 
-                const fetched: Game[] = (data || []).map((g) => ({
+                const fetched: Game[] = (data || []).map((g: any) => ({
                     id: g.id,
                     title: g.title,
                     key: g.key,
@@ -362,13 +362,13 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
             <div style={modalStyles.modal}>
                 <h3 style={modalStyles.title}>KHẢO SÁT NHANH</h3>
                 <div style={modalStyles.stepIndicator}>
-                    {[1,2,3,4].map((s) => (
-                        <div 
-                            key={s} 
+                    {[1, 2, 3, 4].map((s) => (
+                        <div
+                            key={s}
                             style={{
                                 ...modalStyles.stepDot,
                                 backgroundColor: step === s ? '#22d3ee' : '#374151'
-                            }} 
+                            }}
                         />
                     ))}
                 </div>
@@ -377,8 +377,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                     <div>
                         <p style={modalStyles.question}>Bạn có thích trò chơi này không?</p>
                         <div style={modalStyles.buttonGroup}>
-                            <button 
-                                onClick={() => handleNextFromStep1('sad')} 
+                            <button
+                                onClick={() => handleNextFromStep1('sad')}
                                 style={{
                                     ...modalStyles.button,
                                     ...modalStyles.emojiButton,
@@ -388,8 +388,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             >
                                 😞
                             </button>
-                            <button 
-                                onClick={() => handleNextFromStep1('neutral')} 
+                            <button
+                                onClick={() => handleNextFromStep1('neutral')}
                                 style={{
                                     ...modalStyles.button,
                                     ...modalStyles.emojiButton,
@@ -399,8 +399,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             >
                                 😐
                             </button>
-                            <button 
-                                onClick={() => handleNextFromStep1('happy')} 
+                            <button
+                                onClick={() => handleNextFromStep1('happy')}
                                 style={{
                                     ...modalStyles.button,
                                     ...modalStyles.emojiButton,
@@ -419,8 +419,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                     <div>
                         <p style={modalStyles.question}>Trò chơi này dễ hay khó?</p>
                         <div style={modalStyles.buttonGrid}>
-                            <button 
-                                onClick={() => handleNextFromStep2('easy')} 
+                            <button
+                                onClick={() => handleNextFromStep2('easy')}
                                 style={{
                                     ...modalStyles.button,
                                     ...(difficultyAnswer === 'easy' ? modalStyles.buttonSelected : {})
@@ -428,8 +428,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             >
                                 Dễ
                             </button>
-                            <button 
-                                onClick={() => handleNextFromStep2('normal')} 
+                            <button
+                                onClick={() => handleNextFromStep2('normal')}
                                 style={{
                                     ...modalStyles.button,
                                     ...(difficultyAnswer === 'normal' ? modalStyles.buttonSelected : {})
@@ -437,8 +437,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             >
                                 Bình thường
                             </button>
-                            <button 
-                                onClick={() => handleNextFromStep2('hard')} 
+                            <button
+                                onClick={() => handleNextFromStep2('hard')}
                                 style={{
                                     ...modalStyles.button,
                                     ...(difficultyAnswer === 'hard' ? modalStyles.buttonSelected : {})
@@ -462,8 +462,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             placeholder="Nhập bình luận ngắn (tùy chọn)"
                         />
                         <div style={modalStyles.actionButtons}>
-                            <button 
-                                onClick={handleSubmitComment} 
+                            <button
+                                onClick={handleSubmitComment}
                                 style={modalStyles.actionButton}
                             >
                                 Tiếp tục
@@ -476,8 +476,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                     <div>
                         <p style={modalStyles.question}>Bạn có muốn chơi lại không?</p>
                         <div style={modalStyles.buttonGrid}>
-                            <button 
-                                onClick={() => handleReplayChoice('yes')} 
+                            <button
+                                onClick={() => handleReplayChoice('yes')}
                                 style={{
                                     ...modalStyles.button,
                                     ...(wantsReplay === 'yes' ? { border: '1px solid #4ade80', backgroundColor: 'rgba(16, 185, 129, 0.2)' } : {})
@@ -485,8 +485,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             >
                                 Có
                             </button>
-                            <button 
-                                onClick={() => handleReplayChoice('no')} 
+                            <button
+                                onClick={() => handleReplayChoice('no')}
                                 style={{
                                     ...modalStyles.button,
                                     ...(wantsReplay === 'no' ? { border: '1px solid #f87171', backgroundColor: 'rgba(220, 38, 38, 0.2)' } : {})
@@ -505,7 +505,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             <div style={modalStyles.loading}>Đang tải gợi ý...</div>
                         ) : (
                             <div>
-                                {shuffledGames.map((g) => {
+                                {shuffledGames.map((g: Game) => {
                                     const baseHref = g.href || '#';
                                     const initial = { ...(urlParams || {}) };
                                     const params = {
@@ -522,8 +522,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                                     const fullHref = query ? `${baseHref}?${query}` : baseHref;
 
                                     return (
-                                        <a 
-                                            key={g.id} 
+                                        <a
+                                            key={g.id}
                                             href={fullHref}
                                             style={modalStyles.gameLink}
                                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#374151'}
@@ -533,7 +533,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                                                 {g.image ? (
                                                     <img src={g.image} alt={g.title} style={modalStyles.gameImage} />
                                                 ) : (
-                                                    <div style={{...modalStyles.gameImage, backgroundColor: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>🎮</div>
+                                                    <div style={{ ...modalStyles.gameImage, backgroundColor: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🎮</div>
                                                 )}
                                                 <div style={modalStyles.gameInfo}>
                                                     <div style={modalStyles.gameTitle}>{g.title || g.key}</div>
@@ -549,8 +549,8 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, onPlayAgain,
                             </div>
                         )}
                         <div style={modalStyles.actionButtons}>
-                            <button 
-                                onClick={onClose} 
+                            <button
+                                onClick={onClose}
                                 style={modalStyles.actionButton}
                             >
                                 Đóng

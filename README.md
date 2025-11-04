@@ -1,58 +1,58 @@
-# Chunk Tower Stack - Pronunciation Training Game
+# Tháp Xếp Từ Vựng - Trò Chơi Luyện Phát Âm
 
-A 3D pronunciation training game built with React, React Three Fiber, and Rapier physics engine. Players build a tower by "pronouncing" chunks of text, with different pronunciation qualities affecting the physics and stability of the blocks.
+Trò chơi luyện phát âm 3D được xây dựng với React, React Three Fiber và công cụ vật lý Rapier. Người chơi xây dựng tháp bằng cách "phát âm" các đoạn văn bản, với chất lượng phát âm khác nhau ảnh hưởng đến vật lý và độ ổn định của các khối.
 
-## 🎮 Game Features
+## 🎮 Tính Năng Trò Chơi
 
-### Core Gameplay
-- **Pronunciation Simulation**: Press A (Perfect), S (Minor), or D (Failure) to simulate pronunciation quality
-- **Physics-Based Tower Building**: Each block has realistic physics properties based on pronunciation quality
-- **Combo System**: Get 3 perfect pronunciations in a row to activate combo mode with enhanced stability
-- **Tower Collapse**: Poor pronunciation creates unstable blocks that can cause the entire tower to fall
+### Lối Chơi Cốt Lõi
+- **Mô Phỏng Phát Âm**: Nhấn A (Hoàn hảo), S (Tạm được), hoặc D (Thất bại) để mô phỏng chất lượng phát âm
+- **Xây Tháp Dựa Trên Vật Lý**: Mỗi khối có thuộc tính vật lý thực tế dựa trên chất lượng phát âm
+- **Hệ Thống Combo**: Đạt 3 lần phát âm hoàn hảo liên tiếp để kích hoạt chế độ combo với độ ổn định tăng cường
+- **Sụp Đổ Tháp**: Phát âm kém tạo ra các khối không ổn định có thể khiến toàn bộ tháp đổ
 
-### Visual & Audio Effects
-- **3D Graphics**: Immersive 3D environment with dynamic lighting and shadows
-- **Block Effects**: Different glow colors and physics properties for each pronunciation quality
-- **Screen Shake**: Dramatic collapse effects with camera shake
-- **Audio Feedback**: Procedural sound effects for each action type
-- **Combo Aura**: Visual glow effect during combo mode
+### Hiệu Ứng Hình Ảnh & Âm Thanh
+- **Đồ Họa 3D**: Môi trường 3D sống động với ánh sáng và bóng đổ động
+- **Hiệu Ứng Khối**: Màu sắc phát sáng và thuộc tính vật lý khác nhau cho mỗi chất lượng phát âm
+- **Rung Màn Hình**: Hiệu ứng sụp đổ ấn tượng với rung camera
+- **Phản Hồi Âm Thanh**: Hiệu ứng âm thanh tự động cho mỗi loại hành động
+- **Aura Combo**: Hiệu ứng phát sáng trong chế độ combo
 
-### UI Components
-- **Top HUD**: Score, block count, timer, and combo indicator
-- **Bottom UI**: Current chunk prompt, fluency bar, feedback text, and control instructions
-- **Game Over Screen**: Final score display with restart option
+### Thành Phần Giao Diện
+- **HUD Trên**: Điểm số, số lượng khối, đồng hồ đếm ngược và chỉ báo combo
+- **Giao Diện Dưới**: Lời nhắc từ hiện tại, thanh độ trôi chảy, văn bản phản hồi và hướng dẫn điều khiển
+- **Màn Hình Kết Thúc**: Hiển thị điểm cuối với tùy chọn chơi lại
 
-## 🚀 Getting Started
+## 🚀 Bắt Đầu
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
+### Yêu Cầu Hệ Thống
+- Node.js (phiên bản 16 trở lên)
+- npm hoặc yarn
 
-### Installation
+### Cài Đặt
 
-1. Clone or download the project files
-2. Install dependencies:
+1. Sao chép hoặc tải xuống các tệp dự án
+2. Cài đặt các phụ thuộc:
 ```bash
 npm install
 ```
 
-3. Start the development server:
+3. Khởi động máy chủ phát triển:
 ```bash
 npm start
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) to play the game
+4. Mở [http://localhost:3000](http://localhost:3000) để chơi trò chơi
 
-## 🎯 How to Play
+## 🎯 Cách Chơi
 
-1. **Start**: Press any key (A, S, or D) to begin
-2. **Build**: Use keyboard inputs to add blocks:
-   - **A Key**: Perfect pronunciation (✅) - Stable, centered block (+100 points)
-   - **S Key**: Minor issues (⚠️) - Slightly tilted block (+50 points)  
-   - **D Key**: Poor pronunciation (❌) - Heavily tilted, offset block (+0 points)
-3. **Combo**: Get 3 perfect pronunciations in a row for combo mode (+150 points per perfect block)
-4. **Survive**: Keep your tower stable - if it tilts too much, it will collapse!
-5. **Score**: Build as high as possible within the 2-minute time limit
+1. **Bắt Đầu**: Nhấn bất kỳ phím nào (A, S, hoặc D) để bắt đầu
+2. **Xây Dựng**: Sử dụng đầu vào bàn phím để thêm khối:
+   - **Phím A**: Phát âm hoàn hảo (✅) - Khối ổn định, căn giữa (+100 điểm)
+   - **Phím S**: Vấn đề nhỏ (⚠️) - Khối hơi nghiêng (+50 điểm)  
+   - **Phím D**: Phát âm kém (❌) - Khối nghiêng nhiều, lệch vị trí (+0 điểm)
+3. **Combo**: Đạt 3 lần phát âm hoàn hảo liên tiếp cho chế độ combo (+150 điểm mỗi khối hoàn hảo)
+4. **Sinh Tồn**: Giữ tháp ổn định - nếu nghiêng quá nhiều, nó sẽ đổ!
+5. **Ghi Điểm**: Xây cao nhất có thể trong giới hạn thời gian 2 phút
 
 ## 🛠 Technical Architecture
 

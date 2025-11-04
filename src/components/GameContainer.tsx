@@ -331,20 +331,20 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
           </button>
           
           <h1 style={{ fontSize: '48px', marginBottom: '20px', textShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
-            {isWinCondition ? '🎉 Congratulations!' : 'Game Over!'}
+            {isWinCondition ? '🎉 Chúc mừng!' : 'Kết thúc trò chơi!'}
           </h1>
         
         <div style={{ fontSize: '24px', marginBottom: '10px' }}>
-          Final Score: <span style={{ color: '#ffaa00' }}>{gameState.score}</span>
+          Điểm cuối: <span style={{ color: '#ffaa00' }}>{gameState.score}</span>
         </div>
         
         <div style={{ fontSize: '20px', marginBottom: '10px' }}>
-          Blocks Built: <span style={{ color: '#00ff88' }}>{gameState.towerBlocks.length}</span>
+          Khối đã xây: <span style={{ color: '#00ff88' }}>{gameState.towerBlocks.length}</span>
           <span style={{ color: '#666' }}>/10</span>
         </div>
         
         <div style={{ fontSize: '18px', marginBottom: '30px' }}>
-          Blocks Fallen: <span style={{ color: '#ff4444' }}>{gameState.fallenBlocks}</span>
+          Khối đã rơi: <span style={{ color: '#ff4444' }}>{gameState.fallenBlocks}</span>
           <span style={{ color: '#666' }}>/5</span>
         </div>
         
@@ -375,7 +375,7 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
             e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 255, 136, 0.3)';
           }}
         >
-          Play Again
+          Chơi lại
         </button>
       </div>
       <SurveyModal
@@ -477,22 +477,22 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            Chunk Tower Stack
+            Tháp Xếp Từ Vựng
           </h1>
           
           <p style={{ fontSize: '20px', marginBottom: '30px', textAlign: 'center', maxWidth: '500px' }}>
-            Build a tower by pronouncing words correctly!<br/>
-            Say the words clearly into your microphone.
+            Xây dựng tháp bằng cách phát âm từ chính xác!<br/>
+            Nói rõ ràng vào micro của bạn.
           </p>
           
           <div style={{ fontSize: '16px', color: '#ccc', textAlign: 'center' }}>
-            <div>🎤 Speak clearly for automatic scoring</div>
-            <div>🎯 Get 3 perfect pronunciations for COMBO mode!</div>
-            <div>⚠️ Keep your tower balanced or it will collapse!</div>
+            <div>🎤 Nói rõ ràng để được chấm điểm tự động</div>
+            <div>🎯 Đạt 3 lần phát âm hoàn hảo để kích hoạt chế độ COMBO!</div>
+            <div>⚠️ Giữ tháp cân bằng hoặc nó sẽ đổ!</div>
             <div style={{ marginTop: '10px', fontSize: '14px' }}>
-              <span style={{ color: '#00ff88' }}>≥70: Perfect</span> | 
-              <span style={{ color: '#ffaa00' }}> ≥40: Minor</span> | 
-              <span style={{ color: '#ff4444' }}> &lt;40: Failure</span>
+              <span style={{ color: '#00ff88' }}>≥70: Hoàn hảo</span> | 
+              <span style={{ color: '#ffaa00' }}> ≥40: Tạm được</span> | 
+              <span style={{ color: '#ff4444' }}> &lt;40: Thất bại</span>
             </div>
           </div>
 
@@ -520,7 +520,7 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
               e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 255, 136, 0.3)';
             }}
           >
-            🎤 Start Speaking Game
+            🎤 Bắt đầu trò chơi nói
           </button>
         </div>
       )}

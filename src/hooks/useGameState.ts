@@ -10,22 +10,34 @@ const INITIAL_STATE: GameState = {
   fallenBlocks: 0,
   isGameOver: false,
   isGameStarted: false,
-  currentChunk: "Hello world",
+  currentChunk: "Xin chào",
   fluencyLevel: 'neutral',
-  feedbackText: "Say the word to start building!",
+  feedbackText: "Nói từ để bắt đầu xây dựng!",
   isWaitingForNext: false,
   currentChunkIndex: 0
 };
 
 const CHUNKS = [
-  "Hello world",
+  "Hello",
   "How are you?",
   "Nice to meet you",
-  "What's your name?",
-  "I'm fine, thanks",
+  "What’s your name?",
+  "I’m fine, thank you",
   "See you later",
-  "Have a good day",
-  "Take care"
+  "Have a great day",
+  "Take care",
+  "Good morning",
+  "Good night",
+  "Where are you from?",
+  "I’m from Vietnam",
+  "Can you help me?",
+  "Thank you very much",
+  "You’re welcome",
+  "I don’t understand",
+  "Please speak slowly",
+  "How much is this?",
+  "I’m sorry",
+  "Excuse me"
 ];
 
 export const useGameState = () => {
@@ -40,8 +52,8 @@ export const useGameState = () => {
         if (prev.timerValue <= 1) {
           // Game over: Hết thời gian mà chưa được 10 blocks
           const gameOverReason = prev.towerBlocks.length < 10 
-            ? "Time's up! You need at least 10 blocks to win! ⏰"
-            : "Congratulations! You built a stable tower! 🎉";
+            ? "Hết thời gian! Bạn cần ít nhất 10 khối để thắng! ⏰"
+            : "Chúc mừng! Bạn đã xây được tháp vững chắc! 🎉";
           
           return { 
             ...prev, 
@@ -90,11 +102,11 @@ export const useGameState = () => {
         scoreIncrease = prev.isComboActive ? 150 : 100;
         newComboStreak = prev.comboStreak + 1;
         fluencyLevel = 'perfect';
-        feedbackText = `Perfect pronunciation! Score: ${score} ✅`;
+        feedbackText = `Phát âm hoàn hảo! Điểm: ${score} ✅`;
         
         if (newComboStreak >= 3) {
           newIsComboActive = true;
-          feedbackText = `COMBO ACTIVE! Score: ${score} 🔥`;
+          feedbackText = `COMBO KÍCH HOẠT! Điểm: ${score} 🔥`;
         }
       } else if (score >= 40) {
         inputType = 'S';
@@ -102,14 +114,14 @@ export const useGameState = () => {
         newComboStreak = 0;
         newIsComboActive = false;
         fluencyLevel = 'minor';
-        feedbackText = `Good effort! Score: ${score} ⚠️`;
+        feedbackText = `Cố gắng tốt! Điểm: ${score} ⚠️`;
       } else {
         inputType = 'D';
         scoreIncrease = 0;
         newComboStreak = 0;
         newIsComboActive = false;
         fluencyLevel = 'failure';
-        feedbackText = `Try again! Score: ${score} ❌`;
+        feedbackText = `Thử lại! Điểm: ${score} ❌`;
       }
 
       // Calculate position for new block
@@ -166,7 +178,7 @@ export const useGameState = () => {
       setGameState(prev => ({
         ...prev,
         isWaitingForNext: false,
-        feedbackText: `Say: "${prev.currentChunk}"`
+        feedbackText: `Nói: "${prev.currentChunk}"`
       }));
     }, 3000);
   }, [gameState.isGameOver, gameState.isWaitingForNext]);
@@ -192,11 +204,11 @@ export const useGameState = () => {
           scoreIncrease = prev.isComboActive ? 150 : 100;
           newComboStreak = prev.comboStreak + 1;
           fluencyLevel = 'perfect';
-          feedbackText = "Perfect pronunciation! ✅";
+          feedbackText = "Phát âm hoàn hảo! ✅";
           
           if (newComboStreak >= 3) {
             newIsComboActive = true;
-            feedbackText = "COMBO ACTIVE! Smooth speech! 🔥";
+            feedbackText = "COMBO KÍCH HOẠT! Nói trôi chảy! 🔥";
           }
           break;
           
@@ -205,7 +217,7 @@ export const useGameState = () => {
           newComboStreak = 0;
           newIsComboActive = false;
           fluencyLevel = 'minor';
-          feedbackText = "Good effort! Keep practicing ⚠️";
+          feedbackText = "Cố gắng tốt! Tiếp tục luyện tập ⚠️";
           break;
           
         case 'D': // Failure
@@ -213,7 +225,7 @@ export const useGameState = () => {
           newComboStreak = 0;
           newIsComboActive = false;
           fluencyLevel = 'failure';
-          feedbackText = "Try again! Focus on clarity ❌";
+          feedbackText = "Thử lại! Tập trung vào độ rõ ràng ❌";
           break;
       }
 
@@ -272,7 +284,7 @@ export const useGameState = () => {
     setGameState(prev => ({
       ...prev,
       isGameStarted: true,
-      feedbackText: `Say: "${prev.currentChunk}"`
+      feedbackText: `Nói: "${prev.currentChunk}"`
     }));
   }, []);
 
@@ -281,7 +293,7 @@ export const useGameState = () => {
     setGameState(prev => ({
       ...prev,
       isGameOver: true,
-      feedbackText: "Tower fell! Try again! 💥"
+      feedbackText: "Tháp đổ rồi! Thử lại! 💥"
     }));
   }, []);
 
@@ -298,14 +310,14 @@ export const useGameState = () => {
           ...prev,
           fallenBlocks: newFallenBlocks,
           isGameOver: true,
-          feedbackText: "Too many blocks fell! Game Over! 💥"
+          feedbackText: "Quá nhiều khối rơi! Kết thúc trò chơi! 💥"
         };
       }
       
       return {
         ...prev,
         fallenBlocks: newFallenBlocks,
-        feedbackText: `Block fell! ${newFallenBlocks}/5 falls remaining ⚠️`
+        feedbackText: `Khối rơi! Còn ${5 - newFallenBlocks}/5 lần rơi ⚠️`
       };
     });
   }, []);

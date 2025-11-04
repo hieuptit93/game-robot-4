@@ -32,10 +32,10 @@ const TopHud: React.FC<TopHudProps> = ({ gameState }) => {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <div>
-          Blocks: <span style={{ color: '#00ff88' }}>{gameState.towerBlocks.length}</span>
+          Khối: <span style={{ color: '#00ff88' }}>{gameState.towerBlocks.length}</span>
         </div>
         <div>
-          Score: <span style={{ color: '#ffaa00' }}>{gameState.score}</span>
+          Điểm: <span style={{ color: '#ffaa00' }}>{gameState.score}</span>
         </div>
       </div>
       
