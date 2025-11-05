@@ -306,7 +306,7 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          background: 'linear-gradient(135deg, #1a1a1a 0%, #2d1b69 100%)',
+          background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
           color: 'white',
           textAlign: 'center'
         }}>
@@ -330,22 +330,39 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
             ← Thoát game
           </button>
           
-          <h1 style={{ fontSize: '48px', marginBottom: '20px', textShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
-            {isWinCondition ? '🎉 Chúc mừng!' : 'Kết thúc trò chơi!'}
+          <h1 style={{ 
+            fontSize: '48px', 
+            marginBottom: '20px', 
+            textShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            fontFamily: 'Comic Sans MS, cursive'
+          }}>
+            {isWinCondition ? '🎉 Chúc mừng! 🎉' : '🎮 Kết thúc trò chơi! 🎮'}
           </h1>
         
-        <div style={{ fontSize: '24px', marginBottom: '10px' }}>
-          Điểm cuối: <span style={{ color: '#ffaa00' }}>{gameState.score}</span>
+        <div style={{ 
+          fontSize: '24px', 
+          marginBottom: '10px',
+          fontFamily: 'Comic Sans MS, cursive'
+        }}>
+          🏆 Điểm cuối: <span style={{ color: '#f39c12' }}>{gameState.score}</span>
         </div>
         
-        <div style={{ fontSize: '20px', marginBottom: '10px' }}>
-          Khối đã xây: <span style={{ color: '#00ff88' }}>{gameState.towerBlocks.length}</span>
-          <span style={{ color: '#666' }}>/10</span>
+        <div style={{ 
+          fontSize: '20px', 
+          marginBottom: '10px',
+          fontFamily: 'Comic Sans MS, cursive'
+        }}>
+          🏗️ Khối đã xây: <span style={{ color: '#2ecc71' }}>{gameState.towerBlocks.length}</span>
+          <span style={{ color: '#ccc' }}>/10</span>
         </div>
         
-        <div style={{ fontSize: '18px', marginBottom: '30px' }}>
-          Khối đã rơi: <span style={{ color: '#ff4444' }}>{gameState.fallenBlocks}</span>
-          <span style={{ color: '#666' }}>/5</span>
+        <div style={{ 
+          fontSize: '18px', 
+          marginBottom: '30px',
+          fontFamily: 'Comic Sans MS, cursive'
+        }}>
+          💥 Khối đã rơi: <span style={{ color: '#e74c3c' }}>{gameState.fallenBlocks}</span>
+          <span style={{ color: '#ccc' }}>/5</span>
         </div>
         
         <div style={{ fontSize: '18px', marginBottom: '40px', color: '#ccc' }}>
@@ -357,22 +374,22 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
           style={{
             padding: '15px 30px',
             fontSize: '20px',
-            background: 'linear-gradient(45deg, #00ff88, #00cc6a)',
+            background: 'linear-gradient(45deg, #e74c3c, #3498db)',
             border: 'none',
             borderRadius: '10px',
             color: 'white',
             cursor: 'pointer',
             fontWeight: 'bold',
-            boxShadow: '0 4px 15px rgba(0, 255, 136, 0.3)',
+            boxShadow: '0 4px 15px rgba(231, 76, 60, 0.3)',
             transition: 'all 0.3s ease'
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 255, 136, 0.4)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.4)';
           }}
           onMouseOut={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 255, 136, 0.3)';
+            e.currentTarget.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.3)';
           }}
         >
           Chơi lại
@@ -441,7 +458,7 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.8)',
+          background: 'rgba(30, 30, 60, 0.95)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -470,29 +487,39 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
             ← Thoát game
           </button>
           <h1 style={{ 
-            fontSize: '48px', 
+            fontSize: '40px', 
             marginBottom: '20px',
-            textShadow: '0 4px 8px rgba(0,0,0,0.5)',
-            background: 'linear-gradient(45deg, #00ff88, #ffaa00)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            textShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            color: '#ffffff',
+            fontFamily: 'Comic Sans MS, cursive'
           }}>
-            Tháp Xếp Từ Vựng
+            🏗️ Tháp Xếp Từ Vựng 🏗️
           </h1>
           
-          <p style={{ fontSize: '20px', marginBottom: '30px', textAlign: 'center', maxWidth: '500px' }}>
-            Xây dựng tháp bằng cách phát âm từ chính xác!<br/>
-            Nói rõ ràng vào micro của bạn.
+          <p style={{ 
+            fontSize: '20px', 
+            marginBottom: '30px', 
+            textAlign: 'center', 
+            maxWidth: '500px',
+            fontFamily: 'Comic Sans MS, cursive'
+          }}>
+            Xây dựng tháp bằng cách phát âm từ chính xác! <br/>
+            Nói rõ ràng vào micro của bạn nhé!
           </p>
           
-          <div style={{ fontSize: '16px', color: '#ccc', textAlign: 'center' }}>
-            <div>🎤 Nói rõ ràng để được chấm điểm tự động</div>
-            <div>🎯 Đạt 3 lần phát âm hoàn hảo để kích hoạt chế độ COMBO!</div>
-            <div>⚠️ Giữ tháp cân bằng hoặc nó sẽ đổ!</div>
+          <div style={{ 
+            fontSize: '16px', 
+            color: '#fff', 
+            textAlign: 'center',
+            fontFamily: 'Comic Sans MS, cursive'
+          }}>
+            <div>Nói rõ ràng để được chấm điểm tự động </div>
+            <div>Đạt 3 lần phát âm hoàn hảo để kích hoạt chế độ COMBO! </div>
+            <div>Giữ tháp cân bằng hoặc nó sẽ đổ! </div>
             <div style={{ marginTop: '10px', fontSize: '14px' }}>
-              <span style={{ color: '#00ff88' }}>≥70: Hoàn hảo</span> | 
-              <span style={{ color: '#ffaa00' }}> ≥40: Tạm được</span> | 
-              <span style={{ color: '#ff4444' }}> &lt;40: Thất bại</span>
+              <span style={{ color: '#2ecc71' }}>≥70: Hoàn hảo 🌟</span> | 
+              <span style={{ color: '#f39c12' }}> ≥40: Tạm được 👍</span> | 
+              <span style={{ color: '#e74c3c' }}> &lt;40: Thất bại 😅</span>
             </div>
           </div>
 
@@ -502,25 +529,25 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
               marginTop: '30px',
               padding: '15px 30px',
               fontSize: '18px',
-              background: 'linear-gradient(45deg, #00ff88, #00cc6a)',
+              background: 'linear-gradient(45deg, #e74c3c, #3498db)',
               border: 'none',
               borderRadius: '10px',
               color: 'white',
               cursor: 'pointer',
               fontWeight: 'bold',
-              boxShadow: '0 4px 15px rgba(0, 255, 136, 0.3)',
+              boxShadow: '0 4px 15px rgba(231, 76, 60, 0.3)',
               transition: 'all 0.3s ease'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 255, 136, 0.4)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.4)';
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 255, 136, 0.3)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.3)';
             }}
           >
-            🎤 Bắt đầu trò chơi nói
+            Bắt đầu
           </button>
         </div>
       )}

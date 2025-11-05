@@ -140,6 +140,20 @@ const TowerBlock: React.FC<TowerBlockProps> = ({ block, index, isComboActive, on
     friction: block.type === 'perfect' ? 1.0 : block.type === 'minor' ? 0.95 : 0.4,    // Failure blocks có friction thấp để trượt
   };
 
+  // Get bright, kid-friendly colors based on block type
+  const getBuildingColor = () => {
+    switch (block.type) {
+      case 'perfect':
+        return '#4ade80'; // Bright green (xanh lá)
+      case 'minor':
+        return '#ffd93d'; // Bright yellow (vàng)
+      case 'failure':
+        return '#ff6b6b'; // Bright red (đỏ)
+      default:
+        return block.color;
+    }
+  };
+
   return (
     <RigidBody
       ref={rigidBodyRef}
@@ -150,14 +164,72 @@ const TowerBlock: React.FC<TowerBlockProps> = ({ block, index, isComboActive, on
       restitution={physicsProps.restitution}
       friction={physicsProps.friction}
     >
+      {/* Main building block */}
       <mesh ref={meshRef} castShadow receiveShadow>
         <boxGeometry args={blockSize} />
         <meshStandardMaterial
-          color={block.color}
+          color={getBuildingColor()}
           metalness={0.1}
           roughness={0.3}
         />
       </mesh>
+      
+      {/* Windows on front face */}
+      <mesh position={[0, 0, blockSize[2] / 2 + 0.01]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[-0.4, 0, blockSize[2] / 2 + 0.01]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[0.4, 0, blockSize[2] / 2 + 0.01]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      
+      {/* Windows on back face */}
+      <mesh position={[0, 0, -blockSize[2] / 2 - 0.01]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[-0.4, 0, -blockSize[2] / 2 - 0.01]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[0.4, 0, -blockSize[2] / 2 - 0.01]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      
+      {/* Windows on left face */}
+      <mesh position={[-blockSize[0] / 2 - 0.01, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[-blockSize[0] / 2 - 0.01, 0, -0.4]} rotation={[0, -Math.PI / 2, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[-blockSize[0] / 2 - 0.01, 0, 0.4]} rotation={[0, -Math.PI / 2, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      
+      {/* Windows on right face */}
+      <mesh position={[blockSize[0] / 2 + 0.01, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[blockSize[0] / 2 + 0.01, 0, -0.4]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+      <mesh position={[blockSize[0] / 2 + 0.01, 0, 0.4]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[0.3, 0.3]} />
+        <meshStandardMaterial color="#ffeb3b" />
+      </mesh>
+
       <CuboidCollider args={[blockSize[0] / 2, blockSize[1] / 2, blockSize[2] / 2]} />
       
       {/* Glow effect */}
