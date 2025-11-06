@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@datadog/browser-rum": "^6.23.0",
+    "@datadog/browser-rum-react": "^6.23.0",
     "@react-three/fiber": "^8.15.11",
     "@react-three/rapier": "^1.4.0",
     "@supabase/supabase-js": "^2.78.0",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GameContainer from './components/GameContainer';
+import { setUserContext } from './utils/datadog';
 
 interface UrlParams {
   [key: string]: string;
@@ -31,6 +32,14 @@ const App: React.FC = () => {
         setAge(Number.isFinite(n) ? n : extractedAgeRaw);
       }
 
+      // Set user context in Datadog as soon as we have the data
+      if (extractedUserId != null) {
+        const finalAge = extractedAgeRaw != null ?
+          (Number.isFinite(Number(extractedAgeRaw)) ? Number(extractedAgeRaw) : extractedAgeRaw) :
+          null;
+        setUserContext(extractedUserId, finalAge, extractedGameId);
+      }
+
       // Remove extracted keys from general params
       const { user_id, userId: userIdKey, age: ageKey, game_id, gameId: gameIdKey, ...rest } = all;
       setUrlParams(rest);
@@ -38,6 +47,21 @@ const App: React.FC = () => {
       // noop
     }
   }, []);
+
+  // Track app initialization with user data
+  useEffect(() => {
+    if (userId) {
+      // Import trackGameEvent dynamically to avoid circular dependencies
+      import('./utils/datadog').then(({ trackGameEvent }) => {
+        trackGameEvent('app_initialized', {
+          userId,
+          age: age ? String(age) : undefined,
+          gameId: gameId ? String(gameId) : undefined,
+          hasUrlParams: Object.keys(urlParams).length > 0
+        });
+      });
+    }
+  }, [userId, age, gameId, urlParams]);
 
   return (
     <div style={{
@@ -48,7 +72,7 @@ const App: React.FC = () => {
       overflow: 'hidden',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif'
     }}>
-      <GameContainer 
+      <GameContainer
         userId={userId}
         age={age}
         gameId={gameId}

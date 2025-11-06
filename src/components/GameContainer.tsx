@@ -8,6 +8,7 @@ import TowerStackScene from './TowerStackScene';
 import SurveyModal from './SurveyModal';
 import { InputType } from '../types/game';
 import { supabase } from '../lib/supabaseClient';
+import { trackGameEvent, trackGameError, setUserContext } from '../utils/datadog';
 
 interface GameContainerProps {
   userId: string | null;
@@ -22,19 +23,38 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
   const [isWin, setIsWin] = useState(false);
   const { gameState, handleInput, handlePronunciationResult, resetGame: originalResetGame, startGame: originalStartGame, triggerCollapse, handleBlockFall } = useGameState();
 
+  // Update user context for Datadog when game container loads (in case App.tsx didn't set it)
+  useEffect(() => {
+    setUserContext(userId, age, gameId);
+  }, [userId, age, gameId]);
+
   // Wrapper to reset gameSessionId when starting new game
   const startGame = useCallback(() => {
     setGameSessionId(null);
     setIsWin(false);
     originalStartGame();
-  }, [originalStartGame]);
+
+    // Track game start
+    trackGameEvent('game_started', {
+      userId: userId || 'anonymous',
+      age: age ? String(age) : undefined,
+      gameId: gameId ? String(gameId) : undefined
+    });
+  }, [originalStartGame, userId, age, gameId]);
 
   // Wrapper to reset gameSessionId when resetting
   const resetGame = useCallback(() => {
     setGameSessionId(null);
     setIsWin(false);
     originalResetGame();
-  }, [originalResetGame]);
+
+    // Track game reset
+    trackGameEvent('game_reset', {
+      userId: userId || 'anonymous',
+      previousScore: gameState.score,
+      blocksBuilt: gameState.towerBlocks.length
+    });
+  }, [originalResetGame, userId, gameState.score, gameState.towerBlocks.length]);
   const { playSound } = useAudio();
 
   // Memoize the analysis callback to prevent recreation
@@ -44,9 +64,19 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
       // Convert score to 0-100 range (multiply by 100)
       const score = Math.round(result.total_score * 100);
       console.log('📊 Final score:', score);
+
+      // Track pronunciation analysis
+      trackGameEvent('pronunciation_analysis', {
+        rawScore: result.total_score,
+        finalScore: score,
+        currentChunk: gameState.currentChunk,
+        gameScore: gameState.score,
+        blocksBuilt: gameState.towerBlocks.length
+      });
+
       handlePronunciationResult(score);
     }
-  }, [handlePronunciationResult]);
+  }, [handlePronunciationResult, gameState.currentChunk, gameState.score, gameState.towerBlocks.length]);
 
   // Memoize the pronunciation config to prevent recreation
   const pronunciationConfig = useMemo(() => ({
@@ -69,10 +99,10 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
 
   // Simple state-based approach to avoid loops
   const shouldListen = gameState.isGameStarted && !gameState.isGameOver && !gameState.isWaitingForNext;
-  
+
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     if (shouldListen) {
       console.log('🎤 Starting pronunciation listening for:', gameState.currentChunk);
       // Small delay to prevent rapid start/stop cycles
@@ -114,7 +144,16 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
 
   const handleInputWithAudio = (inputType: InputType) => {
     handleInput(inputType);
-    
+
+    // Track pronunciation input
+    trackGameEvent('pronunciation_input', {
+      inputType,
+      currentChunk: gameState.currentChunk,
+      score: gameState.score,
+      comboStreak: gameState.comboStreak,
+      blocksBuilt: gameState.towerBlocks.length
+    });
+
     // Play appropriate sound
     switch (inputType) {
       case 'A':
@@ -135,6 +174,14 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
   const handleCollapse = () => {
     playSound('collapse');
     triggerCollapse();
+
+    // Track tower collapse
+    trackGameEvent('tower_collapse', {
+      score: gameState.score,
+      blocksBuilt: gameState.towerBlocks.length,
+      fallenBlocks: gameState.fallenBlocks,
+      comboStreak: gameState.comboStreak
+    });
   };
 
   // Track win condition (towerBlocks.length >= 10 when game over)
@@ -142,7 +189,21 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
     if (gameState.isGameOver && gameState.towerBlocks.length >= 10) {
       setIsWin(true);
     }
-  }, [gameState.isGameOver, gameState.towerBlocks.length]);
+
+    // Track game completion
+    if (gameState.isGameOver) {
+      const isWinCondition = gameState.towerBlocks.length >= 10;
+      trackGameEvent('game_completed', {
+        isWin: isWinCondition,
+        finalScore: gameState.score,
+        blocksBuilt: gameState.towerBlocks.length,
+        fallenBlocks: gameState.fallenBlocks,
+        maxComboStreak: gameState.comboStreak,
+        userId: userId || 'anonymous',
+        gameSessionId
+      });
+    }
+  }, [gameState.isGameOver, gameState.towerBlocks.length, gameState.score, gameState.fallenBlocks, gameState.comboStreak, userId, gameSessionId]);
 
   // Create a game_session row only when game actually starts
   useEffect(() => {
@@ -172,6 +233,11 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
 
         if (error) {
           console.error('Failed to create game session:', error);
+          trackGameError(new Error('Failed to create game session'), {
+            error: error.message,
+            userId,
+            gameId
+          });
           return;
         }
 
@@ -179,6 +245,10 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
         console.log('Created game session:', data?.id);
       } catch (err) {
         console.error('Unexpected error creating game session:', err);
+        trackGameError(err instanceof Error ? err : new Error('Unknown error creating game session'), {
+          userId,
+          gameId
+        });
       }
     };
 
@@ -192,9 +262,9 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
         setIsSurveyOpen(false);
         return;
       }
-      
+
       console.log('🔍 Checking survey display:', { gameState, gameSessionId, userId, gameId, score: gameState.score });
-      
+
       try {
         const numericGameId = Number.isFinite(Number(gameId)) ? Number(gameId) : null;
 
@@ -248,7 +318,7 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
     const timer = setTimeout(() => {
       checkAndOpenSurvey();
     }, 200);
-    
+
     return () => clearTimeout(timer);
   }, [gameState.isGameOver, gameSessionId, userId, gameId, gameState.score]);
 
@@ -329,82 +399,82 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
           >
             ← Thoát game
           </button>
-          
-          <h1 style={{ 
-            fontSize: '48px', 
-            marginBottom: '20px', 
+
+          <h1 style={{
+            fontSize: '48px',
+            marginBottom: '20px',
             textShadow: '0 4px 8px rgba(0,0,0,0.3)',
             fontFamily: 'Comic Sans MS, cursive'
           }}>
             {isWinCondition ? '🎉 Chúc mừng! 🎉' : '🎮 Kết thúc trò chơi! 🎮'}
           </h1>
-        
-        <div style={{ 
-          fontSize: '24px', 
-          marginBottom: '10px',
-          fontFamily: 'Comic Sans MS, cursive'
-        }}>
-          🏆 Điểm cuối: <span style={{ color: '#f39c12' }}>{gameState.score}</span>
-        </div>
-        
-        <div style={{ 
-          fontSize: '20px', 
-          marginBottom: '10px',
-          fontFamily: 'Comic Sans MS, cursive'
-        }}>
-          🏗️ Khối đã xây: <span style={{ color: '#2ecc71' }}>{gameState.towerBlocks.length}</span>
-          <span style={{ color: '#ccc' }}>/10</span>
-        </div>
-        
-        <div style={{ 
-          fontSize: '18px', 
-          marginBottom: '30px',
-          fontFamily: 'Comic Sans MS, cursive'
-        }}>
-          💥 Khối đã rơi: <span style={{ color: '#e74c3c' }}>{gameState.fallenBlocks}</span>
-          <span style={{ color: '#ccc' }}>/5</span>
-        </div>
-        
-        <div style={{ fontSize: '18px', marginBottom: '40px', color: '#ccc' }}>
-          {gameState.feedbackText}
-        </div>
-        
-        <button
-          onClick={resetGame}
-          style={{
-            padding: '15px 30px',
+
+          <div style={{
+            fontSize: '24px',
+            marginBottom: '10px',
+            fontFamily: 'Comic Sans MS, cursive'
+          }}>
+            🏆 Điểm cuối: <span style={{ color: '#f39c12' }}>{gameState.score}</span>
+          </div>
+
+          <div style={{
             fontSize: '20px',
-            background: 'linear-gradient(45deg, #e74c3c, #3498db)',
-            border: 'none',
-            borderRadius: '10px',
-            color: 'white',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            boxShadow: '0 4px 15px rgba(231, 76, 60, 0.3)',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.4)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.3)';
-          }}
-        >
-          Chơi lại
-        </button>
-      </div>
-      <SurveyModal
-        isOpen={isSurveyOpen}
-        onClose={handleCloseSurvey}
-        onPlayAgain={handlePlayAgain}
-        gameSessionId={gameSessionId}
-        currentGameId={gameId}
-        userId={userId}
-        age={age}
-        urlParams={urlParams}
-      />
+            marginBottom: '10px',
+            fontFamily: 'Comic Sans MS, cursive'
+          }}>
+            🏗️ Khối đã xây: <span style={{ color: '#2ecc71' }}>{gameState.towerBlocks.length}</span>
+            <span style={{ color: '#ccc' }}>/10</span>
+          </div>
+
+          <div style={{
+            fontSize: '18px',
+            marginBottom: '30px',
+            fontFamily: 'Comic Sans MS, cursive'
+          }}>
+            💥 Khối đã rơi: <span style={{ color: '#e74c3c' }}>{gameState.fallenBlocks}</span>
+            <span style={{ color: '#ccc' }}>/5</span>
+          </div>
+
+          <div style={{ fontSize: '18px', marginBottom: '40px', color: '#ccc' }}>
+            {gameState.feedbackText}
+          </div>
+
+          <button
+            onClick={resetGame}
+            style={{
+              padding: '15px 30px',
+              fontSize: '20px',
+              background: 'linear-gradient(45deg, #e74c3c, #3498db)',
+              border: 'none',
+              borderRadius: '10px',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 15px rgba(231, 76, 60, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.3)';
+            }}
+          >
+            Chơi lại
+          </button>
+        </div>
+        <SurveyModal
+          isOpen={isSurveyOpen}
+          onClose={handleCloseSurvey}
+          onPlayAgain={handlePlayAgain}
+          gameSessionId={gameSessionId}
+          currentGameId={gameId}
+          userId={userId}
+          age={age}
+          urlParams={urlParams}
+        />
       </>
     );
   }
@@ -419,14 +489,14 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
       {/* HUD Components */}
       <TopHud gameState={gameState} />
       <BottomUi gameState={gameState} onInput={handleInputWithAudio} pronunciationHook={pronunciationHook} />
-      
+
       {/* 3D Scene */}
-      <TowerStackScene 
-        gameState={gameState} 
+      <TowerStackScene
+        gameState={gameState}
         onCollapse={handleCollapse}
         onBlockFall={handleBlockFall}
       />
-      
+
       {/* Exit button when playing */}
       {gameState.isGameStarted && !gameState.isGameOver && (
         <button
@@ -486,8 +556,8 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
           >
             ← Thoát game
           </button>
-          <h1 style={{ 
-            fontSize: '40px', 
+          <h1 style={{
+            fontSize: '40px',
             marginBottom: '20px',
             textShadow: '0 4px 8px rgba(0,0,0,0.3)',
             color: '#ffffff',
@@ -495,21 +565,21 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
           }}>
             🏗️ Tháp Xếp Từ Vựng 🏗️
           </h1>
-          
-          <p style={{ 
-            fontSize: '20px', 
-            marginBottom: '30px', 
-            textAlign: 'center', 
+
+          <p style={{
+            fontSize: '20px',
+            marginBottom: '30px',
+            textAlign: 'center',
             maxWidth: '500px',
             fontFamily: 'Comic Sans MS, cursive'
           }}>
-            Xây dựng tháp bằng cách phát âm từ chính xác! <br/>
+            Xây dựng tháp bằng cách phát âm từ chính xác! <br />
             Nói rõ ràng vào micro của bạn nhé!
           </p>
-          
-          <div style={{ 
-            fontSize: '16px', 
-            color: '#fff', 
+
+          <div style={{
+            fontSize: '16px',
+            color: '#fff',
             textAlign: 'center',
             fontFamily: 'Comic Sans MS, cursive'
           }}>
@@ -517,8 +587,8 @@ const GameContainer: React.FC<GameContainerProps> = ({ userId, age, gameId, urlP
             <div>Đạt 3 lần phát âm hoàn hảo để kích hoạt chế độ COMBO! </div>
             <div>Giữ tháp cân bằng hoặc nó sẽ đổ! </div>
             <div style={{ marginTop: '10px', fontSize: '14px' }}>
-              <span style={{ color: '#2ecc71' }}>≥70: Hoàn hảo 🌟</span> | 
-              <span style={{ color: '#f39c12' }}> ≥40: Tạm được 👍</span> | 
+              <span style={{ color: '#2ecc71' }}>≥70: Hoàn hảo 🌟</span> |
+              <span style={{ color: '#f39c12' }}> ≥40: Tạm được 👍</span> |
               <span style={{ color: '#e74c3c' }}> &lt;40: Thất bại 😅</span>
             </div>
           </div>
